@@ -1,28 +1,35 @@
-# Entry point for the FastAPI application
-# Configures routers and initializes the app
+from fastapi import FastAPI
+from app.api import auth_routes, dashboard_routes
+from app.database.base import Base
+from app.database.session import engine
 
-from fastapi import FastAPI, Depends
-from sqlalchemy.orm import Session
-from sqlalchemy import text
+Base.metadata.create_all(bind=engine)
+from app.models.models import Base
 
-from app.api import auth_routes, component_routes
-from app.database.session import get_db
+# Import API routers
+from app.api import auth_routes
+from app.api import component_routes
 
-app = FastAPI(title="MCO Inventory System")
+app = FastAPI()
 
-# Include API routers
+# Create database tables
+Base.metadata.create_all(bind=engine)
+
+# Register routers
 app.include_router(auth_routes.router)
 app.include_router(component_routes.router)
+app.include_router(dashboard_routes.router)
 
-
-# Root endpoint
 @app.get("/")
 def root():
-    return {"status": "MCO system running"}
+    return {"message": "MCO Inventory System API Running"}
 
 
-# Database connection test endpoint
-@app.get("/db-test")
-def db_test(db: Session = Depends(get_db)):
-    db.execute(text("SELECT 1"))
-    return {"database": "connected"}
+
+
+
+
+
+
+
+
