@@ -5,7 +5,7 @@ from fastapi.templating import Jinja2Templates
 from app.services.module_e.auth import create_token
 from app.utils.audit import log_login
 
-router = APIRouter(prefix="/auth")
+router = APIRouter()
 
 templates = Jinja2Templates(directory="app/templates")
 
