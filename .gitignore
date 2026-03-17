@@ -1,1 +1,7 @@
 .env
+venv/
+backend/venv/
+__pycache__/
+logs/
+backend/venv/pyvenv.cfg
+backend/.env

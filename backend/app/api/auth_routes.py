@@ -23,27 +23,6 @@ def login_page(request: Request):
 
 # Login form submission
 @router.post("/login")
-def login(username: str = Form(...), password: str = Form(...)):
-
-    user = users.get(username)
-
-    if not user:
-        log_login(username, "FAILED USER")
-        return {"message": "Invalid Username"}
-
-    if user["password"] != password:
-        log_login(username, "FAILED PASSWORD")
-        return {"message": "Invalid Password"}
-
-    log_login(username, "SUCCESS")
-
-    token = create_token(username, user["role"])
-
-    return {
-        "message": "Login Successful",
-        "token": token,
-        "role": user["role"]
-    }
 def login(request: Request, username: str = Form(...), password: str = Form(...)):
 
     user = users.get(username)
