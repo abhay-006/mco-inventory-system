@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Body, HTTPException, status
+from fastapi import APIRouter, Depends, Body
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
@@ -6,9 +6,6 @@ from app.models.models import Component, ComponentCreate, LifecycleLog
 from app.services.module_d.lifecycle import transition
 from app.services.module_e.rbac import require_role
 from app.utils.audit import log_transition
-from app.schemas.logic_calculation_schema import CalculationRequest, CalculationResponse
-from app.services.module_b.scale_engine import ScaleEngine
-
 
 router = APIRouter()
 
@@ -24,6 +21,9 @@ def add_component(component: ComponentCreate, db: Session = Depends(get_db)):
     if existing:
         return {"error": "Component already exists"}
 
+    if component.state is None or component.state == "":
+        return {"error": "State cannot be empty"}
+
     new_component = Component(
         component_id=component.component_id,
         name=component.name,
@@ -32,9 +32,16 @@ def add_component(component: ComponentCreate, db: Session = Depends(get_db)):
 
     db.add(new_component)
     db.commit()
+    db.refresh(new_component)
 
-    return {"message": "Component Added"}
-
+    return {
+        "message": "Component Added Successfully",
+        "component": {
+            "component_id": new_component.component_id,
+            "name": new_component.name,
+            "state": new_component.state
+        }
+    }
 
 # LIST COMPONENTS
 @router.get("/component/list")
@@ -96,16 +103,3 @@ def change_state(
         "error": "Invalid State Transition",
         "current_state": current_state
     }
-
-#Scale Engine Calculation
-
-@router.post("/calculate", response_model=CalculationResponse, status_code=status.HTTP_200_OK)
-def calculate_entitlement(request: CalculationRequest, db: Session = Depends(get_db)):
-    try:
-        return ScaleEngine.process_calculation(db=db, request=request)
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Calculation failed: {str(e)}"
-        )
