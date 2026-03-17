@@ -5,3 +5,4 @@ __pycache__/
 logs/
 backend/venv/pyvenv.cfg
 backend/.env
+venv_tushar/
