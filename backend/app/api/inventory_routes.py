@@ -4,8 +4,9 @@ from sqlalchemy import create_engine, text
 import os
 from dotenv import load_dotenv
 
-# Load environment variables from .env
+# Load environment variables
 load_dotenv()
+
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL not set in .env file")
@@ -13,6 +14,7 @@ if not DATABASE_URL:
 engine = create_engine(DATABASE_URL)
 
 router = APIRouter(prefix="/inventory", tags=["Inventory"])
+
 
 # -----------------------------
 # GET CURRENT STOCK
@@ -24,9 +26,15 @@ def get_stock(component_id: int):
             text("SELECT quantity, location FROM inventory WHERE component_id=:cid"),
             {"cid": component_id}
         ).fetchone()
+
         if not result:
             raise HTTPException(status_code=404, detail="Component not found")
-        return {"component_id": component_id, "quantity": result[0], "location": result[1]}
+
+        return {
+            "component_id": component_id,
+            "quantity": result[0],
+            "location": result[1]
+        }
 
 
 # -----------------------------
@@ -47,7 +55,7 @@ def process_transaction(
     if quantity <= 0:
         raise HTTPException(status_code=400, detail="Quantity must be greater than 0")
 
-    with engine.begin() as conn:  # automatic commit/rollback
+    with engine.begin() as conn:
         # Get current stock
         result = conn.execute(
             text("SELECT quantity FROM inventory WHERE component_id=:cid"),
@@ -56,6 +64,7 @@ def process_transaction(
 
         if not result:
             raise HTTPException(status_code=404, detail="Component not found")
+
         current_qty = result[0]
 
         # Calculate new stock
@@ -66,13 +75,13 @@ def process_transaction(
                 raise HTTPException(status_code=400, detail="Not enough stock to remove")
             new_qty = current_qty - quantity
 
-        # Update inventory table
+        # Update inventory
         conn.execute(
             text("UPDATE inventory SET quantity=:qty WHERE component_id=:cid"),
             {"qty": new_qty, "cid": component_id}
         )
 
-        # Insert into transactions table
+        # Log transaction
         conn.execute(
             text("""
                 INSERT INTO transactions(transaction_id, component_id, action, user_id)
@@ -81,4 +90,9 @@ def process_transaction(
             {"cid": component_id, "act": action, "uid": user_id}
         )
 
-    return {"component_id": component_id, "action": action, "quantity": quantity, "new_stock": new_qty}
+    return {
+        "component_id": component_id,
+        "action": action,
+        "quantity": quantity,
+        "new_stock": new_qty
+    }
