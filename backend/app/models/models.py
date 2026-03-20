@@ -6,19 +6,22 @@ from pydantic import BaseModel
 # =========================
 # COMPONENT TABLE
 # =========================
-class Component(Base):
-    __tablename__ = "components"
-
-    component_id = Column(Integer, primary_key=True, index=True)
-    name = Column(String)
-    state = Column(String)
-
-
-# COMPONENT REQUEST SCHEMA
-class ComponentCreate(BaseModel):
-    component_id: int
-    name: str
-    state: str
+# DEPRECATED (v1)
+# Legacy component model/schema intentionally disabled for migration to v2.
+# Use: app.models.component_v2.ComponentDefinition and app.schemas.component_schema.ComponentCreate
+#
+# class Component(Base):
+#     __tablename__ = "components"
+#
+#     component_id = Column(Integer, primary_key=True, index=True)
+#     name = Column(String)
+#     state = Column(String)
+#
+#
+# class ComponentCreate(BaseModel):
+#     component_id: int
+#     name: str
+#     state: str
 
 
 # =========================
